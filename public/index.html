@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>user click Test</title>
+    <meta charset="utf-8" />
+    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+    <script
+        src="https://unpkg.com/aframe-environment-component@1.3.2/dist/aframe-environment-component.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.0.0/dist/aframe-extras.min.js"></script>
+    <script
+        src="https://rawgit.com/Ctrl-Alt-Zen/aframe-mobile-controls/master/components/twoway-motion/twoway-motion.js"></script>
+
+    <link rel="stylesheet" href="/css/user-gesture.css">
+    <!-- //VERY HANDY! https://socket.io/docs/v3/emit-cheatsheet/  -->
+    <!-- since we are going to put the socket.io code in a component to make sure aframe is loaded before
+        we start doing anything it, we will put the code in the header so that the component "exists" before we 
+        use it as an attribute on a-scene -->
+    <script src="/socket.io/socket.io.js"></script>
+
+</head>
+
+<body>
+    <!-- our buttond to tell others -->
+    <!-- <button id="red" style="background-color:rgb(255, 0, 0); color:rgb(255, 255, 255)">RED</button>
+        <button id="blue" style="background-color:rgb(0, 0, 255); color:rgb(255, 255, 255)">BLUE</button> -->
+
+    <a-scene experience-manager renderer="antialias: true;
+        colorManagement: true;
+        sortObjects: true;
+        physicallyCorrectLights: true;">
+
+        <a-assets timeout="10000">
+
+            <a-asset-item id="roomObjId" src="./assets/Room.gltf" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="controlObjId" src="./assets/Control.gltf" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="startObjId" src="./assets/Start.gltf" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="displayObjId" src="./assets/display.gltf" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="buttonCompObjId" src="./assets/Button_Comp.gltf" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="buttonCoopObjId" src="./assets/Button_Coop.gltf" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="buttonStartObjId" src="./assets/Button_Start.gltf" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="targetObjId" src="./assets/Target.gltf" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="gamemodeCoopObjId" src="./assets/gamemode-coop.gltf" crossorigin="anonymous"></a-asset-item>
+            <a-asset-item id="gamemodeCompObjId" src="./assets/gamemode-competitive.gltf" crossorigin="anonymous"></a-asset-item>
+
+            <audio id="buttonSoundSrc" src="/assets/ButtonSound.mp3" preload="auto" crossorigin="anonymous"></audio>
+
+        </a-assets>
+
+
+        <!-- Models -->
+        <a-entity id="room" gltf-model="#roomObjId" scale="1 1 1" position="0 0 0" visible="true" shadow></a-entity>
+        <a-entity id="control" gltf-model="#controlObjId" scale="1 1 1" position="0 0 0" visible="true" shadow></a-entity>
+        <a-entity id="start" gltf-model="#startObjId" scale="1 1 1" position="0 0 0" visible="true" shadow></a-entity>
+
+        <a-entity id="display" gltf-model="#displayObjId" scale="1 1 1" position="-32.794 7.620 0" visible="true" shadow>
+            <a-entity id="player1Score" position="0.1 -0.690 2.847" scale="50 50 50" rotation="0 90 0" text="value: 0; align: center"></a-entity>
+            <a-entity id="player2Score" position="0.1 -0.690 -2.847" scale="50 50 50" rotation="0 90 0" text="value: 0; align: center"></a-entity>
+        </a-entity>
+
+        <a-entity id="totalScore" position="0 1 0" scale="50 50 50" rotation="0 90 0" text="value: 0; align: center"></a-entity>
+        <a-entity id="timer" position="-8.010 2 0" scale="50 50 50" rotation="0 90 0" text="value: 0; align: center"></a-entity>
+
+        <a-entity id="buttonComp" gltf-model="#buttonCompObjId" scale="1 1 1" 
+            position="0 0 0" visible="true" shadow class="button interactive"
+            animation-mixer="clip: none; loop: once; clampWhenFinished: true;">
+        </a-entity>
+        <a-entity id="buttonCoop" gltf-model="#buttonCoopObjId" scale="1 1 1" 
+            position="0 0 0" visible="true" shadow class="button interactive"
+            animation-mixer="clip: none; loop: once; clampWhenFinished: true;">
+        </a-entity>
+        <a-entity id="buttonStart" gltf-model="#buttonStartObjId" scale="1 1 1" 
+            position="0 0 0" visible="true" shadow class="button interactive"
+            animation-mixer="clip: none; loop: once; clampWhenFinished: true;">
+        </a-entity>
+
+        <a-entity id="target1" gltf-model="#targetObjId" scale="1 1 1" position="0 0 0" visible="true" class="button interactive" shadow></a-entity>
+        <a-entity id="target2" gltf-model="#targetObjId" scale="1 1 1" position="0 1 0" visible="true" class="button interactive" shadow></a-entity>
+        <a-entity id="coop" gltf-model="#gamemodeCoopObjId" scale="1 1 1" position="0 0 0" visible="true" shadow></a-entity>
+        <a-entity id="comp" gltf-model="#gamemodeCompObjId" scale="1 1 1" position="0 0 0" visible="false" shadow></a-entity>
+
+        
+        <a-entity id="tableLight"
+        light="type:point; intensity:3.78; castShadow:true; shadowBias:-0.0005;  "
+        position="0 5 0" ></a-entity>
+
+
+        <!-- Sound -->
+        <a-entity id="buttonCompSound" sound="src:#buttonSoundSrc; autoplay:false;"
+            position="2.504 1.352 2.632"></a-entity>
+
+        <a-entity id="buttonCoopSound" sound="src:#buttonSoundSrc; autoplay:false;"
+            position="2.504 1.352 -2.632"></a-entity>
+      
+        <a-entity id="buttonStartSound" sound="src:#buttonSoundSrc; autoplay:false;"
+            position="-7.220 0.907 0"></a-entity>
+
+
+        <a-entity camera wasd-controls look-controls position="0 1.6 0">
+            <a-entity cursor="rayOrigin:mouse;" raycaster="far:90; interval:200; objects:.interactive"></a-entity>
+        </a-entity>
+
+
+        <a-entity environment="preset:tron ; fog:0.75;" position="0 -0.15 -3.490"></a-entity>
+    </a-scene>
+</body>
+
+</html>
+
+<script src="js/a3.js"></script>
